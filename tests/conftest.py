@@ -6,13 +6,8 @@ from helpers.api_data import ApiData
 from helpers.data_generator import generate_user
 
 
-@pytest.fixture(scope="session")
-def api():
-    return StellarBurgersAPI()
-
-
 @pytest.fixture(scope="session", autouse=True)
-def check_api_available(api):
+def check_api_available():
     """
     Если API совсем недоступен (DNS/сеть), тесты будут падать понятной ошибкой.
     Можно временно пропустить проверку так:
@@ -21,6 +16,7 @@ def check_api_available(api):
     if os.getenv("SKIP_API_CHECK") == "1":
         return
 
+    api = StellarBurgersAPI()
     r = api.get_ingredients()
     if r.status_code == ApiData.NETWORK_ERROR:
         pytest.fail(
@@ -36,8 +32,13 @@ def user_data():
 
 
 @pytest.fixture
-def registered_user(api, user_data):
-    # register
+def registered_user(user_data):
+    """
+    Сложная логика предусловия/постусловия — норм для фикстуры:
+    регистрируем пользователя и удаляем после теста.
+    """
+    api = StellarBurgersAPI()
+
     reg = api.register(user_data["email"], user_data["password"], user_data["name"])
     assert reg.status_code == ApiData.HTTP_OK, f"Register failed: {reg.status_code} {reg.text}"
 
@@ -50,6 +51,5 @@ def registered_user(api, user_data):
 
     yield user_data, token
 
-    # cleanup
     if token:
         api.delete_user(token)

@@ -1,4 +1,6 @@
 import allure
+
+from helpers.api_client import StellarBurgersAPI
 from helpers.api_data import ApiData
 
 
@@ -6,7 +8,9 @@ from helpers.api_data import ApiData
 class TestCreateOrder:
 
     @allure.title("Создание заказа с авторизацией")
-    def test_create_order_with_auth(self, api, registered_user):
+    def test_create_order_with_auth(self, registered_user):
+        api = StellarBurgersAPI()
+
         _, token = registered_user
         ingredients = api.get_any_ingredient_ids(limit=2)
 
@@ -18,7 +22,9 @@ class TestCreateOrder:
         assert ApiData.KEY_ORDER in body
 
     @allure.title("Создание заказа без авторизации")
-    def test_create_order_without_auth(self, api):
+    def test_create_order_without_auth(self):
+        api = StellarBurgersAPI()
+
         ingredients = api.get_any_ingredient_ids(limit=2)
         r = api.create_order(ingredients)
         assert r.status_code == ApiData.HTTP_OK
@@ -27,13 +33,17 @@ class TestCreateOrder:
         assert body.get(ApiData.KEY_SUCCESS) is True
 
     @allure.title("Создание заказа без ингредиентов")
-    def test_create_order_without_ingredients(self, api, registered_user):
+    def test_create_order_without_ingredients(self, registered_user):
+        api = StellarBurgersAPI()
+
         _, token = registered_user
         r = api.create_order([], token=token)
         assert r.status_code == ApiData.HTTP_BAD_REQUEST
 
     @allure.title("Создание заказа с неверным хешем ингредиентов")
-    def test_create_order_invalid_ingredients(self, api, registered_user):
+    def test_create_order_invalid_ingredients(self, registered_user):
+        api = StellarBurgersAPI()
+
         _, token = registered_user
         r = api.create_order(["invalid_hash"], token=token)
         assert r.status_code in (ApiData.HTTP_BAD_REQUEST, ApiData.HTTP_SERVER_ERROR)

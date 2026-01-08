@@ -1,6 +1,7 @@
 import allure
 import pytest
 
+from helpers.api_client import StellarBurgersAPI
 from helpers.api_data import ApiData
 
 
@@ -8,7 +9,9 @@ from helpers.api_data import ApiData
 class TestCreateUser:
 
     @allure.title("Создать уникального пользователя")
-    def test_create_unique_user(self, api, user_data):
+    def test_create_unique_user(self, user_data):
+        api = StellarBurgersAPI()
+
         r = api.register(user_data["email"], user_data["password"], user_data["name"])
         assert r.status_code == ApiData.HTTP_OK
 
@@ -20,7 +23,9 @@ class TestCreateUser:
         api.delete_user(token)
 
     @allure.title("Создать пользователя, который уже зарегистрирован")
-    def test_create_existing_user(self, api, registered_user):
+    def test_create_existing_user(self, registered_user):
+        api = StellarBurgersAPI()
+
         user_data, _ = registered_user
         r = api.register(user_data["email"], user_data["password"], user_data["name"])
         assert r.status_code == ApiData.HTTP_FORBIDDEN
@@ -30,7 +35,9 @@ class TestCreateUser:
 
     @allure.title("Создать пользователя без обязательного поля")
     @pytest.mark.parametrize("missing_field", ["email", "password", "name"])
-    def test_create_user_missing_required_field(self, api, user_data, missing_field):
+    def test_create_user_missing_required_field(self, user_data, missing_field):
+        api = StellarBurgersAPI()
+
         payload = dict(user_data)
         payload[missing_field] = ""
 
